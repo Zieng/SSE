@@ -223,9 +223,9 @@ if __name__ == '__main__':
 	# indexer.load_default()
 	indexer.load_index('./index_compressed.json', compressed = True)
 
-	while 1:
-		# docId = int(raw_input("input a docID:"))
-		query = raw_input("input a test query:\n\t")
-		match = indexer.handle_query( query )
-		print( match )
+	# while 1:
+	# 	# docId = int(raw_input("input a docID:"))
+	# 	query = raw_input("input a test query:\n\t")
+	# 	match = indexer.handle_query( query )
+	# 	print( match )
 		
