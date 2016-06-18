@@ -51,6 +51,7 @@ class SSE_Indexer(object):
 
 	def tokenize(self, input ):
 		tokens = nltk.word_tokenize(input.lower())
+		# return tokens
 		tag_tokens = nltk.pos_tag( tokens )
 		return [self.lema.lemmatize(x,self.get_wordnet_pos(t)) for (x,t) in tag_tokens ]
 
@@ -70,8 +71,10 @@ class SSE_Indexer(object):
 		print(docId)
 		self.handledFiles.append(docId)
 		with open(filename, "r") as f:
-			text = f.read().decode('utf-8').encode('utf-8')
-			# text = text.replace("&lt;","<")
+			try:
+				text = f.read().decode('utf-8').encode('utf-8')
+			except:
+				pass
 		terms = self.tokenize( text )
 		handledTerms = []
 		for term in terms:
@@ -179,6 +182,12 @@ if __name__ == '__main__':
 	# indexer.compute_doc_len()
 	# indexer.store_default()
 	indexer.load_default()
+	for t in indexer.indexTable:
+		postingList = indexer.indexTable[t]
+		if len(postingList)==1:
+			print(t)
+			break
+
 	while 1:
 		# docId = int(raw_input("input a docID:"))
 		query = raw_input("input a test query:")

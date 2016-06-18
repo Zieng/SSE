@@ -29,14 +29,16 @@ class SSE_Query(object):
 				continue
 			for posting in postingList:
 				doc = posting['doc']
-				relatedDoc.append(doc)
+				if doc not in relatedDoc:
+					relatedDoc.append(doc)
 				tf = posting['tf']
 				weight = (1+math.log10(tf)) * self.indexer.idf_table[term]
 				score[doc] += weight
+
 		for doc in relatedDoc:
 			score[doc] = score[doc] / self.indexer.doc_len[doc]
-		return sorted(score.iteritems(), key=lambda d:d[1], reverse = True)[0:k]
 
+		return sorted(score.iteritems(), key=lambda d:d[1], reverse = True)[0:k]
 
 
 # test
