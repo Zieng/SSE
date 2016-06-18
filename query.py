@@ -48,12 +48,11 @@ class SSE_Query(object):
 				pos=pos+1
 		return score_dict
 
-	def cosine_score(self, query, k=5):
+	def fastCosineScore(self, query, k=5):
 		score = {}
 		relatedDoc = []
 		for d in self.indexer.doc_len:
-			score[d] = 0
-		# queryTermList = self.indexer.handle_query(query)
+			score[int(d)] = 0   # json doesn't allowed integer key
 		queryTermList = self.indexer.tokenize(query)
 		for term in queryTermList:
 			postingList = self.indexer.indexTable.get(term,None)
@@ -68,7 +67,7 @@ class SSE_Query(object):
 				score[doc] += weight
 
 		for doc in relatedDoc:
-			score[doc] = score[doc] / self.indexer.doc_len[doc]
+			score[doc] = score[doc] / self.indexer.doc_len[str(doc)] # json doesn't allowed integer key
 
 		return sorted(score.iteritems(), key=lambda d:d[1], reverse = True)[0:k]
 
@@ -80,12 +79,12 @@ class SSE_Query(object):
 		for i in self.keyword.finditer(query_clause):
 			if(and_flag):
 				sub_query_clause=query_clause[start_pos:i.start()]
-				result_list=self.cosine_score(sub_query_clause,100)
+				result_list=self.fastCosineScore(sub_query_clause,100)
 				and_set[0]=SSE_Query.AND_operation(and_set[0],SSE_Query.build_dict(result_list))
 				and_flag=False
 			else:
 				sub_query_clause=query_clause[start_pos:i.start()]
-				result_list=self.cosine_score(sub_query_clause,100)
+				result_list=self.fastCosineScore(sub_query_clause,100)
 				and_set[0]=SSE_Query.build_dict(result_list)
 
 			if(i.group()=='AND'):
@@ -97,12 +96,12 @@ class SSE_Query(object):
 
 		if(and_flag):
 			sub_query_clause=query_clause[start_pos:]
-			result_list=self.cosine_score(sub_query_clause,100)
+			result_list=self.fastCosineScore(sub_query_clause,100)
 			and_set[0]=SSE_Query.AND_operation(and_set[0],SSE_Query.build_dict(result_list))
 			or_set.append(and_set[0])
 		else:
 			sub_query_clause=query_clause[start_pos:]
-			result_list=self.cosine_score(sub_query_clause,100)
+			result_list=self.fastCosineScore(sub_query_clause,100)
 			or_set.append(SSE_Query.build_dict(result_list))
 
 		while len(or_set)!=1:

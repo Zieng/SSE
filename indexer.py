@@ -68,9 +68,7 @@ class SSE_Indexer(object):
 		if filename in self.handledFiles:
 			print("duplicate file!\n")
 			return
-		docId = filename.split('/')[-1].split('.')[0]
-		# if self.compressed:
-		docId = int(docId)
+		docId = int( filename.split('/')[-1].split('.')[0] )
 		print(docId)
 		self.handledFiles.append(docId)
 		with open(filename, "r") as f:
@@ -170,7 +168,6 @@ class SSE_Indexer(object):
 				for p in pl:
 					if first_post:
 						first_post = False
-						# previous_docId = p['doc']
 					else:
 						p['doc'] += previous_docId
 					previous_docId = p['doc']
@@ -216,7 +213,7 @@ if __name__ == '__main__':
 	indexer.index_files()
 	indexer.store_index(compressed = True)
 	# indexer.load_default()
-	indexer.load_index('./index_compressed.json', compressed = True)
+	# indexer.load_index('./index_compressed.json', compressed = True)
 
 	# while 1:
 	# 	# docId = int(raw_input("input a docID:"))
