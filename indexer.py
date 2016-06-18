@@ -127,9 +127,8 @@ class SSE_Indexer(object):
 	# def compress_postinglist(self, pl):
 	# 	pass
 	def store_index(self,compressed = False):
-		self.compressed = compressed
 		index_file_name = './index.json'
-		if self.compressed:
+		if compressed:
 			index_file_name = './index_compressed.json'
 			for term in self.indexTable:
 				pl = sorted( self.indexTable[term], key=lambda d:d['doc'])
@@ -141,13 +140,12 @@ class SSE_Indexer(object):
 						previous_docId = p['doc']
 					else:
 						dist = p['doc'] - previous_docId
-						previous_post = p['doc']
+						previous_docId = p['doc']
 						p['doc'] = dist
 				self.indexTable[term] = pl
-		print(self.indexTable['the'])
 		with io.open(index_file_name, 'w', encoding='utf-8') as f:
 			f.write(unicode(json.dumps(self.indexTable, ensure_ascii=False)))
-		print("store index done\n")
+		print("[----store index done----]")
 
 	def store_idf(self):
 		with io.open('./idf.json', 'w', encoding='utf-8') as f:
@@ -160,12 +158,11 @@ class SSE_Indexer(object):
 		print("store doc_len done\n")
 
 	def load_index(self, filename = './index.json' , compressed = False):
-		self.compressed = compressed
 		with io.open(filename, 'r', encoding='utf-8') as f:
 			data=f.read()
 			self.indexTable=json.loads(data)
-		print(self.indexTable['the'])
-		if self.compressed:
+		
+		if compressed:
 			for term in self.indexTable:
 				pl = self.indexTable[term]
 				first_post = True
@@ -178,8 +175,6 @@ class SSE_Indexer(object):
 						p['doc'] += previous_docId
 					previous_docId = p['doc']
 				self.indexTable[term] = pl
-
-		print(self.indexTable['the'])
 		print("[----read index done----]")
 
 
