@@ -24,6 +24,7 @@ class SSE_Indexer(object):
 		self.lema = WordNetLemmatizer()
 		self.idf_table = {}
 		self.doc_len = {}
+		self.compressed = False
 
 	def lookup_index_table(self, input_term ):
 		if input_term in self.indexTable.keys():
@@ -68,6 +69,8 @@ class SSE_Indexer(object):
 			print("duplicate file!\n")
 			return
 		docId = filename.split('/')[-1].split('.')[0]
+		# if self.compressed:
+		docId = int(docId)
 		print(docId)
 		self.handledFiles.append(docId)
 		with open(filename, "r") as f:
@@ -121,8 +124,28 @@ class SSE_Indexer(object):
 		for doc in self.handledFiles:
 			self.doc_len[doc] = math.sqrt(self.doc_len[doc])
 
-	def store_index(self):
-		with io.open('./index.json', 'w', encoding='utf-8') as f:
+	# def compress_postinglist(self, pl):
+	# 	pass
+	def store_index(self,compressed = False):
+		self.compressed = compressed
+		index_file_name = './index.json'
+		if self.compressed:
+			index_file_name = './index_compressed.json'
+			for term in self.indexTable:
+				pl = sorted( self.indexTable[term], key=lambda d:d['doc'])
+				first_post = True
+				previous_docId = 0
+				for p in pl:
+					if first_post:
+						first_post = False
+						previous_docId = p['doc']
+					else:
+						dist = p['doc'] - previous_docId
+						previous_post = p['doc']
+						p['doc'] = dist
+				self.indexTable[term] = pl
+		print(self.indexTable['the'])
+		with io.open(index_file_name, 'w', encoding='utf-8') as f:
 			f.write(unicode(json.dumps(self.indexTable, ensure_ascii=False)))
 		print("store index done\n")
 
@@ -136,11 +159,29 @@ class SSE_Indexer(object):
 			f.write(unicode(json.dumps(self.doc_len, ensure_ascii=False)))
 		print("store doc_len done\n")
 
-	def load_index(self, filename = './index.json' ):
+	def load_index(self, filename = './index.json' , compressed = False):
+		self.compressed = compressed
 		with io.open(filename, 'r', encoding='utf-8') as f:
 			data=f.read()
 			self.indexTable=json.loads(data)
-		print("read index done\n")
+		print(self.indexTable['the'])
+		if self.compressed:
+			for term in self.indexTable:
+				pl = self.indexTable[term]
+				first_post = True
+				previous_docId = 0
+				for p in pl:
+					if first_post:
+						first_post = False
+						# previous_docId = p['doc']
+					else:
+						p['doc'] += previous_docId
+					previous_docId = p['doc']
+				self.indexTable[term] = pl
+
+		print(self.indexTable['the'])
+		print("[----read index done----]")
+
 
 	def load_idf(self, filename = './idf.json'):
 		with io.open(filename, 'r', encoding='utf-8') as f:
@@ -177,23 +218,14 @@ class SSE_Indexer(object):
 # test
 if __name__ == '__main__':
 	indexer = SSE_Indexer(['./test'])
-	# indexer.index_files()
-	# indexer.compute_idf()
-	# indexer.compute_doc_len()
-	# indexer.store_default()
-	indexer.load_default()
-	for t in indexer.indexTable:
-		postingList = indexer.indexTable[t]
-		if len(postingList)==1:
-			print(t)
-			break
+	indexer.index_files()
+	indexer.store_index(compressed = True)
+	# indexer.load_default()
+	indexer.load_index('./index_compressed.json', compressed = True)
 
 	while 1:
 		# docId = int(raw_input("input a docID:"))
-		query = raw_input("input a test query:")
+		query = raw_input("input a test query:\n\t")
 		match = indexer.handle_query( query )
-		tok = indexer.tokenize( query )
-		for t in tok:
-			print(indexer.idf_table[t])
-		# print( match )
+		print( match )
 		
