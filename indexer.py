@@ -28,6 +28,14 @@ class SSE_Indexer(object):
 	def lookup_index_table(self, input_term ):
 		if input_term in self.indexTable.keys():
 			return self.indexTable[ input_term ]
+
+	def wildcard_lookup(self, regxTerm):
+		"""regxTerm is regular form term such as r'he[a-zA-Z_0-9]*' """
+		result = {}
+		for t in self.indexTable:
+			if re.match(regxTerm, t):
+				result[t]=self.indexTable[t]
+		return result
 	
 	def get_wordnet_pos(self,treebank_tag):
 	    if treebank_tag.startswith('J'):
@@ -58,10 +66,12 @@ class SSE_Indexer(object):
 		if filename in self.handledFiles:
 			print("duplicate file!\n")
 			return
-		self.handledFiles.append(filename)
+		docId = filename.split('/')[-1].split('.')[0]
+		print(docId)
+		self.handledFiles.append(docId)
 		with open(filename, "r") as f:
 			text = f.read().decode('utf-8').encode('utf-8')
-			text = text.replace("&lt;","<")
+			# text = text.replace("&lt;","<")
 		terms = self.tokenize( text )
 		handledTerms = []
 		for term in terms:
@@ -70,7 +80,7 @@ class SSE_Indexer(object):
 			if term not in self.indexTable:     # A new term without index
 				# print "new index"
 				new_post=dict()
-				new_post['doc']=filename
+				new_post['doc']=docId
 				new_post['tf']=terms.count(term)
 				new_postingList=[]                        #create a postingList
 				new_postingList.append(new_post)
@@ -78,7 +88,7 @@ class SSE_Indexer(object):
 			else:
 				# print "upate index"
 				new_post=dict()
-				new_post['doc']=filename
+				new_post['doc']=docId
 				new_post['tf']=terms.count(term)
 				self.indexTable[term].append(new_post)
 			handledTerms.append(term)
@@ -109,7 +119,7 @@ class SSE_Indexer(object):
 			self.doc_len[doc] = math.sqrt(self.doc_len[doc])
 
 	def store_index(self):
-		with io.open('./my_index.json', 'w', encoding='utf-8') as f:
+		with io.open('./index.json', 'w', encoding='utf-8') as f:
 			f.write(unicode(json.dumps(self.indexTable, ensure_ascii=False)))
 		print("store index done\n")
 
@@ -123,7 +133,7 @@ class SSE_Indexer(object):
 			f.write(unicode(json.dumps(self.doc_len, ensure_ascii=False)))
 		print("store doc_len done\n")
 
-	def load_index(self, filename = './my_index.json' ):
+	def load_index(self, filename = './index.json' ):
 		with io.open(filename, 'r', encoding='utf-8') as f:
 			data=f.read()
 			self.indexTable=json.loads(data)
@@ -133,13 +143,13 @@ class SSE_Indexer(object):
 		with io.open(filename, 'r', encoding='utf-8') as f:
 			data=f.read()
 			self.idf_table=json.loads(data)
-		print("read idf table done\n")
+		print("read idf table done")
 	
 	def load_doc_len(self, filename = './doc_len.json'):
 		with io.open(filename, 'r', encoding='utf-8') as f:
 			data=f.read()
 			self.doc_len=json.loads(data)
-		print("read idf table done\n")
+		print("read idf table done")
 
 	def load_default(self):
 		self.load_index()
@@ -152,11 +162,13 @@ class SSE_Indexer(object):
 		self.store_doc_len()
 
 	def handle_query(self, input):
+		"""test function"""
 		tokens = self.tokenize( input )
 		common = [ x for x in tokens if x in self.indexTable.keys()  ]
 		return { key:self.indexTable[key] for key in common }
 
 	def get_n_gram(self, input , n = 2):
+		"""query string to n-gram term list"""
 		return [ x for x in ngrams(self.tokenize(input), n ) ]
 
 # test
@@ -166,8 +178,13 @@ if __name__ == '__main__':
 	# indexer.compute_idf()
 	# indexer.compute_doc_len()
 	# indexer.store_default()
+	indexer.load_default()
 	while 1:
+		# docId = int(raw_input("input a docID:"))
 		query = raw_input("input a test query:")
-		# results = indexer.handle_query( query )
-		print( indexer.tokenize( query ))
+		match = indexer.handle_query( query )
+		tok = indexer.tokenize( query )
+		for t in tok:
+			print(indexer.idf_table[t])
+		# print( match )
 		

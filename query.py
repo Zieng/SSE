@@ -19,15 +19,30 @@ class SSE_Query(object):
 	def cosine_score(self, query, k=5):
 		score = {}
 		relatedDoc = []
-		queryTermList = self.indexer.handle_query(query)
+		for d in self.indexer.doc_len:
+			score[d] = 0
+		# queryTermList = self.indexer.handle_query(query)
+		queryTermList = self.indexer.tokenize(query)
 		for term in queryTermList:
-			postingList = self.indexer.indexTable[term]
+			postingList = self.indexer.indexTable.get(term,None)
+			if postingList is None:
+				continue
 			for posting in postingList:
 				doc = posting['doc']
 				relatedDoc.append(doc)
 				tf = posting['tf']
-				weight = (1+math.log10(tf)) * self.indexer.idf[term]
+				weight = (1+math.log10(tf)) * self.indexer.idf_table[term]
 				score[doc] += weight
 		for doc in relatedDoc:
 			score[doc] = score[doc] / self.indexer.doc_len[doc]
 		return sorted(score.iteritems(), key=lambda d:d[1], reverse = True)[0:k]
+
+
+
+# test
+if __name__ == '__main__':
+	SQ = SSE_Query( SSE_Indexer() )
+	while True:
+		query = raw_input("input a test query:")
+		cos = SQ.cosine_score(query)
+		print(cos)
