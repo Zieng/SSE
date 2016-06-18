@@ -41,6 +41,7 @@ class SSE_Query(object):
 		return sorted(score.iteritems(), key=lambda d:d[1], reverse = True)[0:k]
 
 
+
 # test
 if __name__ == '__main__':
 	SQ = SSE_Query( SSE_Indexer() )
