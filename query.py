@@ -8,6 +8,7 @@ import math
 import sys
 import nltk
 from indexer import SSE_Indexer
+from nltk.corpus import wordnet
 
 class SSE_Query(object):
 	"""docstring for SSE_Query"""
@@ -115,7 +116,28 @@ class SSE_Query(object):
 # test
 if __name__ == '__main__':
 	SQ = SSE_Query( SSE_Indexer() )
+	# while True:
+	# 	query = raw_input("input a test query:")
+	# 	result = SQ.query(query)
+	# 	print(result)
 	while True:
 		query = raw_input("input a test query:")
+		#add by JCY for synsets:
+		query_words_init = query.split(' ')
+		query_words = query.split(' ')
+		for w in query_words_init:
+			for s in wordnet.synsets(w):
+				for l in s.lemmas():
+					if(l.name().lower() not in query_words):
+						query_words.append(l.name().decode('utf-8').encode('utf-8').replace('_', ' '))
+		new_query = ''
+		for w in query_words:
+			new_query+=(w+' ')
 		result = SQ.query(query)
+		new_result = SQ.query(new_query)
+		print('without synset query and result::')
+		print(query)
 		print(result)
+		print('synset query and result::')
+		print(new_query)
+		print(new_result)
